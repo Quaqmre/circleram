@@ -33,7 +33,7 @@ func main() {
 	//Handlers
 	userHandler, pwlessUserHandler := user.MakeHandler(userService)
 	//Make Handler each endpoint
-	ach := auth.MakeHandler(authService)
+	authHandler := auth.MakeHandler(authService)
 
 	//Milddlewares
 	authMiddleware := auth.Middleware(authService)
@@ -51,11 +51,11 @@ func main() {
 	})
 
 	r := chi.NewRouter()
-	r.Mount("/auth", ach)
+	r.Use(authMiddleware)
+	r.Mount("/auth", authHandler)
 	r.Mount("/", pwlessUserHandler)
 	r.Group(func(r chi.Router) {
 		// r.Use(authService.Handler)
-		r.Use(authMiddleware)
 		r.Use(cors.Handler)
 		r.Mount("/user", userHandler)
 	})
