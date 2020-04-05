@@ -25,17 +25,18 @@ func main() {
 	//Make Auth Service tree
 	var authService auth.Service
 	{
+		// Get jwt secret string in env variable
 		authService = auth.NewAuthService("mysecret", userService)
 		authService = auth.NewLoggingService(logger, authService)
 	}
 
-	//Middleware
-	var authMiddleware = auth.Middleware(authService)
-
-	//Make Handler each endpoint
-	ch, chpwless := user.MakeHandler(userService)
+	//Handlers
+	userHandler, pwlessUserHandler := user.MakeHandler(userService)
 	//Make Handler each endpoint
 	ach := auth.MakeHandler(authService)
+
+	//Milddlewares
+	authMiddleware := auth.Middleware(authService)
 
 	cors := cors.New(cors.Options{
 		// AllowedOrigins: []string{"https://foo.com"}, // Use this to allow specific origin hosts
@@ -51,12 +52,12 @@ func main() {
 
 	r := chi.NewRouter()
 	r.Mount("/auth", ach)
-	r.Mount("/", chpwless)
+	r.Mount("/", pwlessUserHandler)
 	r.Group(func(r chi.Router) {
 		// r.Use(authService.Handler)
 		r.Use(authMiddleware)
 		r.Use(cors.Handler)
-		r.Mount("/user", ch)
+		r.Mount("/user", userHandler)
 	})
 
 	srv := http.Server{
