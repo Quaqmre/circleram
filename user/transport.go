@@ -32,7 +32,10 @@ func MakeHandler(s Service) (http.Handler, http.Handler) {
 	)
 	rpwless := chi.NewRouter()
 	r := chi.NewRouter()
-	rpwless.Handle("/store", storeHandler)
+	rpwless.Post("/store", func(w http.ResponseWriter, r *http.Request) {
+		storeHandler.ServeHTTP(w, r)
+	})
+
 	r.Handle("/find", findHandler)
 	r.Handle("/list", listHandler)
 	return r, rpwless
@@ -84,7 +87,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	switch err {
 	case ErrUnknown:
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(http.StatusAccepted)
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 	}

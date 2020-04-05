@@ -30,6 +30,11 @@ func makeGetTokenEndpoint(s Service) endpoint.Endpoint {
 	return func(_ context.Context, request interface{}) (response interface{}, err error) {
 		req := request.(getTokenRequest)
 		tokenStr, e := s.GetToken(req.authModel)
+
+		if e != nil {
+			return getTokenResponse{Err: e}, nil
+		}
+
 		return getTokenResponse{Token: tokenStr, Err: e}, nil
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/Quaqmre/circleramkit/user"
 	"github.com/go-chi/chi"
 	httptransport "github.com/go-kit/kit/transport/http"
 )
@@ -16,7 +17,7 @@ func MakeHandler(s Service) http.Handler {
 	getTokenHandler := httptransport.NewServer(
 		authEndpoints.GetTokenEndpoint,
 		decodeGetTokenRequest,
-		httptransport.EncodeJSONResponse,
+		encodeerror,
 	)
 
 	r := chi.NewRouter()
@@ -52,7 +53,7 @@ func encodeerror(ctx context.Context, w http.ResponseWriter, response interface{
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	switch err {
-	case ErrUnknown:
+	case user.ErrUnknown:
 		w.WriteHeader(http.StatusNotFound)
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
