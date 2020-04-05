@@ -51,12 +51,11 @@ func main() {
 	})
 
 	r := chi.NewRouter()
-	r.Use(authMiddleware)
+	r.Use(cors.Handler)
 	r.Mount("/auth", authHandler)
 	r.Mount("/", pwlessUserHandler)
 	r.Group(func(r chi.Router) {
-		// r.Use(authService.Handler)
-		r.Use(cors.Handler)
+		r.Use(authMiddleware)
 		r.Mount("/user", userHandler)
 	})
 
