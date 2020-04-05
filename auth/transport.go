@@ -1,10 +1,9 @@
-package customer
+package auth
 
 import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"github.com/go-chi/chi"
 	httptransport "github.com/go-kit/kit/transport/http"
@@ -12,23 +11,16 @@ import (
 
 func MakeHandler(s Service) http.Handler {
 
-	customerEndpoints := MakeServerEndpoints(s)
+	authEndpoints := MakeAuthEndpoints(s)
 
-	storeHandler := httptransport.NewServer(
-		customerEndpoints.StoreEndpoint,
-		decodeStoreRequest,
+	getTokenHandler := httptransport.NewServer(
+		authEndpoints.GetTokenEndpoint,
+		decodeGetTokenRequest,
 		httptransport.EncodeJSONResponse,
 	)
 
-	findHandler := httptransport.NewServer(
-		customerEndpoints.FindEndpoint,
-		decodeFindRequest,
-		encodeerror,
-	)
 	r := chi.NewRouter()
-
-	r.Handle("/store", storeHandler)
-	r.Handle("/find", findHandler)
+	r.Handle("/gettoken", getTokenHandler)
 	return r
 }
 
@@ -36,22 +28,11 @@ type errorer interface {
 	error() error
 }
 
-func decodeStoreRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
-	var req storeRequest
-	if e := json.NewDecoder(r.Body).Decode(&req.Customer); e != nil {
+func decodeGetTokenRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
+	var req getTokenRequest
+	if e := json.NewDecoder(r.Body).Decode(&req.authModel); e != nil {
 		return nil, e
 	}
-	return req, nil
-}
-
-func decodeFindRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
-	var req findRequest
-	vals := r.URL.Query()
-	id := vals.Get("customerid")
-	customerID, _ := strconv.Atoi(id)
-
-	req.CustomerID = CustomerID(customerID)
-
 	return req, nil
 }
 
