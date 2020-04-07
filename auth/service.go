@@ -14,6 +14,7 @@ type Service interface {
 	IsUserValid(AuthModel) (bool, error)
 	GetToken(AuthModel) (string, error)
 	ParseToken(string) (bool, error)
+	GetUser(tokenString string) (string, error)
 }
 
 type AuthModel struct {
@@ -108,23 +109,19 @@ func (s *service) ParseToken(tokenString string) (bool, error) {
 
 	return tkn.Valid, nil
 }
+func (s *service) GetUser(tokenString string) (string, error) {
 
-// func (s *service) Handler(next http.Handler) http.Handler {
-// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 		ua := r.Header.Get("token")
-// 		authrze, err := s.ParseToken(ua)
+	b, err := s.ParseToken(tokenString)
 
-// 		if err != nil {
-// 			w.WriteHeader(http.StatusUnauthorized)
-// 			return
-// 		}
-
-// 		if !authrze {
-// 			w.WriteHeader(http.StatusUnauthorized)
-// 			return
-// 		}
-
-// 		next.ServeHTTP(w, r)
-
-// 	})
-// }
+	if b {
+		claims := &Claims{}
+		tkn, _ := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+			return s.secret, nil
+		})
+		if claims, ok := tkn.Claims.(*Claims); ok && tkn.Valid {
+			return claims.Username, nil
+		}
+		return "", errors.New("not found user")
+	}
+	return "", err
+}

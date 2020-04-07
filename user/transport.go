@@ -67,6 +67,7 @@ func decodeFindRequest(_ context.Context, r *http.Request) (request interface{},
 func decodeListRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
 	var req listRequest
 
+	// i:=r.Header.Get("user")
 	return req, nil
 }
 

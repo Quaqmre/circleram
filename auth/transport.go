@@ -17,7 +17,7 @@ func MakeHandler(s Service) http.Handler {
 	getTokenHandler := httptransport.NewServer(
 		authEndpoints.GetTokenEndpoint,
 		decodeGetTokenRequest,
-		encodeerror,
+		encodeResponse,
 	)
 
 	r := chi.NewRouter()
@@ -38,9 +38,9 @@ func decodeGetTokenRequest(_ context.Context, r *http.Request) (request interfac
 }
 
 //encodeerror first access to request
-func encodeerror(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+func encodeResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
 	if e, ok := response.(errorer); ok && e.error() != nil {
-		// Not a Go kit transport error, but a business-logic error.
+		// Not a kit transport error, only business-logic error.
 		// Provide those as HTTP errors.
 		encodeError(ctx, e.error(), w)
 		return nil
@@ -51,14 +51,27 @@ func encodeerror(ctx context.Context, w http.ResponseWriter, response interface{
 
 // encode errors from business-logic
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	switch err {
-	case user.ErrUnknown:
-		w.WriteHeader(http.StatusNotFound)
-	default:
-		w.WriteHeader(http.StatusInternalServerError)
+	if err == nil {
+		panic("encodeError with nil error")
 	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(codeFrom(err))
+
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"error": err.Error(),
 	})
+}
+func codeFrom(err error) int {
+	switch err {
+	case user.ErrUnknown:
+		return http.StatusNotFound
+	case ErrWorngContent:
+		return http.StatusNotFound
+	case ErrUnauthorize:
+		return http.StatusUnauthorized
+	case ErrInvalidPassword, ErrInvalidUserName:
+		return http.StatusUnprocessableEntity
+	default:
+		return http.StatusInternalServerError
+	}
 }

@@ -20,6 +20,8 @@ func Middleware(s Service) func(http.Handler) http.Handler {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
+			// user, _ := s.GetUser(ua)
+			// r.Header.Set("user", user)
 			h.ServeHTTP(w, r)
 		})
 	}

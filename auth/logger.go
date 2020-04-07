@@ -50,3 +50,7 @@ func (s *loggingService) ParseToken(tokenString string) (b bool, err error) {
 	}(time.Now())
 	return s.next.ParseToken(tokenString)
 }
+
+func (s *loggingService) GetUser(tokenString string) (string, error) {
+	return s.next.GetUser(tokenString)
+}
